@@ -34,6 +34,8 @@ def start_telnet_server(host,port):
     except KeyboardInterrupt:
         print("Conexión cerrada")
         s.close()
+    except WindowsError:
+        print("DA")
 
 def apaga_servidor():
     s.close()
