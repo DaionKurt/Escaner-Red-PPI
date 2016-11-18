@@ -16,6 +16,9 @@ HTTP_PORT = 80
 FTP_PORT = 20
 TELNET_PORT = 23
 
+ip_actual = None
+actives = None
+
 info = subprocess.STARTUPINFO()
 info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 info.wShowWindow = subprocess.SW_HIDE
@@ -35,6 +38,7 @@ class Net:
         print()
 
 class Ui_principal(object):
+
     def setupUi(self, principal):
         principal.setObjectName("principal")
         principal.resize(800, 416)
@@ -159,10 +163,9 @@ class Ui_principal(object):
         self.horizontalLayout_11.setObjectName("horizontalLayout_11")
         self.boton_seleccionar = QtWidgets.QPushButton(self.tab_escaneo)
         self.boton_seleccionar.setObjectName("boton_seleccionar")
+        self.boton_seleccionar.clicked.connect(self.selecciona_red)
+        self.boton_seleccionar.setMaximumWidth(120)
         self.horizontalLayout_11.addWidget(self.boton_seleccionar)
-        self.boton_cambiar = QtWidgets.QPushButton(self.tab_escaneo)
-        self.boton_cambiar.setObjectName("boton_cambiar")
-        self.horizontalLayout_11.addWidget(self.boton_cambiar)
         self.verticalLayout_7.addLayout(self.horizontalLayout_11)
         self.horizontalLayout_14.addLayout(self.verticalLayout_7)
         self.verticalLayout_11 = QtWidgets.QVBoxLayout()
@@ -181,10 +184,15 @@ class Ui_principal(object):
         self.label_puertos = QtWidgets.QLabel(self.tab_escaneo)
         self.label_puertos.setObjectName("label_puertos")
         self.horizontalLayout_13.addWidget(self.label_puertos)
+
+
         self.boton_puertos = QtWidgets.QPushButton(self.tab_escaneo)
         self.boton_puertos.setObjectName("boton_puertos")
+        self.boton_puertos.clicked.connect(self.escanea_puertos)
         self.horizontalLayout_13.addWidget(self.boton_puertos)
         self.verticalLayout_11.addLayout(self.horizontalLayout_13)
+
+
         self.verticalLayout_9 = QtWidgets.QVBoxLayout()
         self.verticalLayout_9.setObjectName("verticalLayout_9")
         self.label_puertos_abiertos = QtWidgets.QLabel(self.tab_escaneo)
@@ -363,7 +371,6 @@ class Ui_principal(object):
         self.lista_ips.setColumnWidth(0,80)
         self.lista_ips.setColumnWidth(1,130)
         self.lista_ips.setColumnWidth(2,100)
-        self.boton_cambiar.setEnabled(False)
         self.boton_seleccionar.setEnabled(False)
         self.boton_puertos.setEnabled(False)
         self.panel_puertos.setReadOnly(True)
@@ -382,7 +389,6 @@ class Ui_principal(object):
         self.desc_an_profundo.setText(_translate("principal", "Obtiene la mayor cantidad de dispositivos conectados"))
         self.label_ip_disponibles.setText(_translate("principal", "IP\'s disponibles en la red"))
         self.boton_seleccionar.setText(_translate("principal", "Seleccionar"))
-        self.boton_cambiar.setText(_translate("principal", "Cambiar"))
         self.label_ip_trabajo.setText(_translate("principal", "IP de trabajo:"))
         self.label_puertos.setText(_translate("principal", "Escaneo de puertos"))
         self.boton_puertos.setText(_translate("principal", "Iniciar escaneo"))
@@ -433,11 +439,35 @@ class Ui_principal(object):
     def get_all_hosts(self,hosts):
         return list(hosts)
 
+    def selecciona_red(self):
+        try:
+            global ip_actual
+            global actives
+            self.panel_info_ip.clear()
+            ip_actual = actives[self.lista_ips.currentRow()]
+            self.panel_info_ip.append(ip_actual.ip)
+            self.panel_info_ip.append(str(ip_actual.mac))
+            self.panel_info_ip.append(str(ip_actual.name))
+            self.panel_info_ip.append(str(ip_actual.classification))
+        except Exception as e:
+            print(e)
+    def escanea_puertos(self):
+        server_thread_http = threading.Thread(target=self.muestra_puertos)
+        server_thread_http.start()
 
+    def muestra_puertos(self):
+        global ip_actual
+        print(ip_actual.ip)
+        puertos_abiertos,tiempo = PortScanner.scan_ports(ip_actual.ip,0,250)
+        self.panel_info_ip.append("Puertos abiertos: "+str(puertos_abiertos))
+        for n in range(len(puertos_abiertos)):
+            self.panel_puertos.append("Puerto abierto: "+str(puertos_abiertos[n]))
+        self.panel_puertos.append("Tiempo de escaneo"+str(tiempo))
 
     def get_active_hosts(self,z, t):
         ip_net = self.get_ip_net()
         all_hosts = list(ip_net.hosts())
+        global actives
         actives = []
         n = 1
         QtGui.QGuiApplication.processEvents()
@@ -445,7 +475,7 @@ class Ui_principal(object):
             output = subprocess.Popen(['ping', '-n', z, '-w', t, str(all_hosts[i])], stdout=subprocess.PIPE,startupinfo=info, ).communicate()[0]
             IP = str(all_hosts[i])
             print("Escaneando actualmente a: ", IP)
-            self.statusbar.showMessage("Escaneando actualmente a: "+str(IP))
+            #self.statusbar.showMessage("Escaneando actualmente a: "+str(IP))
             if "Respuesta desde " in output.decode('ISO-8859-1') and "TTL=" in output.decode('ISO-8859-1'):
                 from subprocess import Popen, PIPE
                 pid = Popen(["arp", "-n", IP], stdout=PIPE)
@@ -467,63 +497,21 @@ class Ui_principal(object):
                     mac = MACScanner.get_MAC_addr()
                 current = Net(IP, mac, clasificaciones, nombre)
                 actives.append(current)
-        return actives
 
-    def get_ip(self,activos):
-        while True:
-            numIp = int(input("Ingrese número de la IP a la cual realizar escaneo ")) - 1
-            if numIp >= 0 and numIp < len(activos):
-                return activos[numIp]
-            else:
-                print("Opción de IP no válida")
-
-    def begin(self):
-        print("Tu estás conectado a una red\nRed detectada ubicada en: ", self.get_ip_net())
-        print("1. Escaneo rápido")
-        print("2. Escaneo normal")
-        print("3. Escaneo profundo")
-        print("4. Cancelar")
-        rigth = True
-        while (rigth):
-            rigth = False
-            opc = int(input("Selecciona tipo de escaneo: "))
-            if opc == 1:
-                z = '1'
-                t = '50'
-            elif opc == 2:
-                z = '2'
-                t = '50'
-            elif opc == 3:
-                z = '3'
-                t = '200'
-            elif opc == 4:
-                raise KeyboardInterrupt
-            else:
-                rigth = True
-        return z, t
-
-    def print_actives(self,actives):
+    def print_actives(self):
         print("Conexiones activas en esta red:")
+        global actives
         for i in range(len(actives)):
             rowPosition = self.lista_ips.rowCount()
             self.lista_ips.insertRow(rowPosition)
             self.lista_ips.setItem(rowPosition, 0, QtWidgets.QTableWidgetItem(str(actives[i].ip)))
             self.lista_ips.setItem(rowPosition, 1, QtWidgets.QTableWidgetItem(str(actives[i].mac)))
             self.lista_ips.setItem(rowPosition, 2, QtWidgets.QTableWidgetItem(str(actives[i].name)))
-            print(i + 1, end=") ")
-            print(actives[i].ip, end=" | ")
-            print(actives[i].mac, end=" | ")
-            print(actives[i].classification, end=" | ")
-            print(actives[i].name)
 
-    def __initial__(self,actives):
-        self.desbloquea_botones_else()
+    def __initial__(self):
         self.statusbar.showMessage("Se ha completado el escaneo de la red")
         self.habilita_red()
-        self.print_actives(actives)
-        active_net = self.get_ip(actives)
-        print("IP de trabajo: ", active_net.ip)
-        return active_net
+        self.print_actives()
 
     def inicia_escaneo_rapido(self):
         hilo_escaneo_rapido = threading.Thread(target=self.escaneo_rapido)
@@ -541,54 +529,31 @@ class Ui_principal(object):
         self.boton_an_normal.setEnabled(True)
         self.boton_an_rapido.setEnabled(True)
         self.boton_an_profundo.setEnabled(True)
+        self.boton_seleccionar.setEnabled(True)
+        self.boton_puertos.setEnabled(True)
 
     def bloquea_botones_an(self):
         self.statusbar.showMessage("Se ha iniciado el escaneo")
         self.boton_an_normal.setEnabled(False)
         self.boton_an_rapido.setEnabled(False)
         self.boton_an_profundo.setEnabled(False)
-
-    def bloquea_botones_else(self):
-        self.boton_cambiar.setEnabled(False)
         self.boton_seleccionar.setEnabled(False)
         self.boton_puertos.setEnabled(False)
 
-    def desbloquea_botones_else(self):
-        self.boton_cambiar.setEnabled(True)
-        self.boton_seleccionar.setEnabled(True)
-        self.boton_puertos.setEnabled(True)
-
     def escaneo_rapido(self):
         self.bloquea_botones_an()
-        self.bloquea_botones_else()
-        actives = self.get_active_hosts('1', '50')
-        active_net = self.__initial__(actives)
-        print("IP a trabajar: ", active_net.ip)
-        self.escaneo(active_net,actives)
+        self.get_active_hosts('1', '50')
+        self.__initial__()
 
     def escaneo_normal(self):
         self.bloquea_botones_an()
-        self.bloquea_botones_else()
-        actives = self.get_active_hosts('2', '50')
-        active_net = self.__initial__(actives)
-        self.escaneo(active_net,actives)
+        self.get_active_hosts('2', '50')
+        self.__initial__()
 
     def escaneo_profundo(self):
         self.bloquea_botones_an()
-        self.bloquea_botones_else()
-        actives = self.get_active_hosts('3', '200')
-        active_net = self.__initial__(actives)
-        self.escaneo(active_net,actives)
-
-    def escaneo(self,current,list):
-        ip = current.ip
-        print("Actual: ", ip)
-        print("IP:  ", current.ip)
-        print("MAC: ", current.mac)
-        print("NOM: ", current.name)
-        print("CLS: ", current.classification)
-        #PortScanner.scan_ports(ip, 0, 150)
-        self.print_actives(list)
+        self.get_active_hosts('3', '200')
+        self.__initial__()
 
     def inicia_http(self):
         self.panel_servicios.append("Servidor HTTP iniciado en "+IPScanner.getMyIpAddress()+" en el puerto "+str(HTTP_PORT))
@@ -649,8 +614,6 @@ class Ui_principal(object):
             TelnetServer.apaga_servidor()
         except:
             pass
-
-
 
 
 if __name__ == "__main__":
