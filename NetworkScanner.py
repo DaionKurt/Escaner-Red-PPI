@@ -149,6 +149,7 @@ class Ui_principal(object):
         self.desc_an_profundo.setObjectName("desc_an_profundo")
         self.horizontalLayout_10.addWidget(self.desc_an_profundo)
         self.verticalLayout_8.addLayout(self.horizontalLayout_10)
+
         self.horizontalLayout_14.addLayout(self.verticalLayout_8)
         self.verticalLayout_7 = QtWidgets.QVBoxLayout()
         self.verticalLayout_7.setObjectName("verticalLayout_7")
@@ -179,20 +180,49 @@ class Ui_principal(object):
         self.panel_info_ip.setObjectName("panel_info_ip")
         self.verticalLayout_10.addWidget(self.panel_info_ip)
         self.verticalLayout_11.addLayout(self.verticalLayout_10)
+
+
         self.horizontalLayout_13 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_13.setObjectName("horizontalLayout_13")
         self.label_puertos = QtWidgets.QLabel(self.tab_escaneo)
         self.label_puertos.setObjectName("label_puertos")
         self.horizontalLayout_13.addWidget(self.label_puertos)
 
+        self.verticalLayout_11.addLayout(self.horizontalLayout_13)
+
+
+        self.horizontalLayout_30 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_30.setObjectName("horizontalLayout_30")
+
+        self.spinner_inferior = QtWidgets.QSpinBox(self.tab_escaneo)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.spinner_inferior.sizePolicy().hasHeightForWidth())
+        self.label2 = QtWidgets.QLabel(self.tab_escaneo)
+        self.label2.setObjectName("label2")
+        self.horizontalLayout_30.addWidget(self.label2)
+        self.spinner_inferior.setSizePolicy(sizePolicy)
+        self.spinner_inferior.setMinimumSize(QtCore.QSize(50, 0))
+        self.spinner_inferior.setObjectName("spinner_inferior")
+        self.horizontalLayout_30.addWidget(self.spinner_inferior)
+        self.label = QtWidgets.QLabel(self.tab_escaneo)
+        self.label.setObjectName("label")
+        self.horizontalLayout_30.addWidget(self.label)
+        self.spinner_superior = QtWidgets.QSpinBox(self.tab_escaneo)
+        self.spinner_superior.setMinimumSize(QtCore.QSize(50, 0))
+        self.spinner_superior.setObjectName("spinner_superior")
+        self.horizontalLayout_30.addWidget(self.spinner_superior)
+        self.spinner_inferior.setValue(1)
+        self.spinner_superior.setValue(200)
+
 
         self.boton_puertos = QtWidgets.QPushButton(self.tab_escaneo)
         self.boton_puertos.setObjectName("boton_puertos")
         self.boton_puertos.clicked.connect(self.escanea_puertos)
-        self.horizontalLayout_13.addWidget(self.boton_puertos)
-        self.verticalLayout_11.addLayout(self.horizontalLayout_13)
+        self.horizontalLayout_30.addWidget(self.boton_puertos)
 
-
+        self.verticalLayout_11.addLayout(self.horizontalLayout_30)
         self.verticalLayout_9 = QtWidgets.QVBoxLayout()
         self.verticalLayout_9.setObjectName("verticalLayout_9")
         self.label_puertos_abiertos = QtWidgets.QLabel(self.tab_escaneo)
@@ -391,6 +421,8 @@ class Ui_principal(object):
         self.boton_seleccionar.setText(_translate("principal", "Seleccionar"))
         self.label_ip_trabajo.setText(_translate("principal", "IP de trabajo:"))
         self.label_puertos.setText(_translate("principal", "Escaneo de puertos"))
+        self.label.setText(_translate("principal", "a"))
+        self.label2.setText(_translate("principal", "De"))
         self.boton_puertos.setText(_translate("principal", "Iniciar escaneo"))
         self.label_puertos_abiertos.setText(_translate("principal", "Puertos abiertos"))
         #self.label_progreso.setText(_translate("principal", "Progreso del análisis"))
@@ -458,7 +490,7 @@ class Ui_principal(object):
     def muestra_puertos(self):
         global ip_actual
         print(ip_actual.ip)
-        puertos_abiertos,tiempo = PortScanner.scan_ports(ip_actual.ip,0,250)
+        puertos_abiertos,tiempo = PortScanner.scan_ports(ip_actual.ip,self.spinner_inferior.value(),self.spinner_superior.value())
         self.panel_info_ip.append("Puertos abiertos: "+str(puertos_abiertos))
         for n in range(len(puertos_abiertos)):
             self.panel_puertos.append("Puerto abierto: "+str(puertos_abiertos[n]))
