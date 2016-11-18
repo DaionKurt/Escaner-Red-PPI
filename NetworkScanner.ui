@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabs">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_escaneo">
        <attribute name="title">
@@ -100,6 +100,18 @@
                   </item>
                   <item>
                    <widget class="QLabel" name="descr_an_rapido">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>150</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>No garantiza la detección de todos los dispositivos.</string>
                     </property>
@@ -136,6 +148,18 @@
                   </item>
                   <item>
                    <widget class="QLabel" name="desc_an_normal">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>150</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>Detecta más dispositivos en la red que el rápido.</string>
                     </property>
@@ -172,6 +196,18 @@
                   </item>
                   <item>
                    <widget class="QLabel" name="desc_an_profundo">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>150</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>Obtiene la mayor cantidad de dispositivos conectados</string>
                     </property>
@@ -199,7 +235,7 @@
                 <item>
                  <widget class="QListWidget" name="lista_ips">
                   <property name="editTriggers">
-                   <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+                   <set>QAbstractItemView::NoEditTriggers</set>
                   </property>
                  </widget>
                 </item>

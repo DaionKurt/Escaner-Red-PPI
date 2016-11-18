@@ -7,37 +7,11 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-import FTPServer,HTTPServer,IPScanner,PortScanner,TelnetServer,MACScanner
-import threading,re,subprocess,socket
-import subprocess,ipaddress,re,socket,MACScanner
-
-
-HTTP_PORT = 80
-FTP_PORT = 20
-TELNET_PORT = 23
-
-info = subprocess.STARTUPINFO()
-info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-info.wShowWindow = subprocess.SW_HIDE
-
-class Net:
-    def __init__(self, ip, mac, classification, name):
-        self.ip = ip
-        self.mac = mac
-        self.classification = classification
-        self.name = name
-
-    def __del__(self):
-        class_name = self.__class__.__name__
-        print(class_name, " destruido")
-
-    def displayCount(self):
-        print()
 
 class Ui_principal(object):
     def setupUi(self, principal):
         principal.setObjectName("principal")
-        principal.resize(800, 416)
+        principal.resize(729, 416)
         self.centralwidget = QtWidgets.QWidget(principal)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -83,7 +57,6 @@ class Ui_principal(object):
         self.boton_an_rapido.setSizePolicy(sizePolicy)
         self.boton_an_rapido.setMinimumSize(QtCore.QSize(100, 0))
         self.boton_an_rapido.setObjectName("boton_an_rapido")
-        self.boton_an_rapido.clicked.connect(self.inicia_escaneo_rapido)
         self.horizontalLayout_8.addWidget(self.boton_an_rapido)
         self.descr_an_rapido = QtWidgets.QLabel(self.tab_escaneo)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
@@ -107,7 +80,6 @@ class Ui_principal(object):
         self.boton_an_normal.setSizePolicy(sizePolicy)
         self.boton_an_normal.setMinimumSize(QtCore.QSize(100, 0))
         self.boton_an_normal.setObjectName("boton_an_normal")
-        self.boton_an_normal.clicked.connect(self.inicia_escaneo_normal)
         self.horizontalLayout_9.addWidget(self.boton_an_normal)
         self.desc_an_normal = QtWidgets.QLabel(self.tab_escaneo)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
@@ -131,7 +103,6 @@ class Ui_principal(object):
         self.boton_an_profundo.setSizePolicy(sizePolicy)
         self.boton_an_profundo.setMinimumSize(QtCore.QSize(100, 0))
         self.boton_an_profundo.setObjectName("boton_an_profundo")
-        self.boton_an_profundo.clicked.connect(self.inicia_escaneo_profundo)
         self.horizontalLayout_10.addWidget(self.boton_an_profundo)
         self.desc_an_profundo = QtWidgets.QLabel(self.tab_escaneo)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
@@ -151,7 +122,7 @@ class Ui_principal(object):
         self.label_ip_disponibles = QtWidgets.QLabel(self.tab_escaneo)
         self.label_ip_disponibles.setObjectName("label_ip_disponibles")
         self.verticalLayout_7.addWidget(self.label_ip_disponibles)
-        self.lista_ips = QtWidgets.QTableWidget(self.tab_escaneo)
+        self.lista_ips = QtWidgets.QListWidget(self.tab_escaneo)
         self.lista_ips.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.lista_ips.setObjectName("lista_ips")
         self.verticalLayout_7.addWidget(self.lista_ips)
@@ -198,13 +169,13 @@ class Ui_principal(object):
         self.verticalLayout_12.addLayout(self.horizontalLayout_14)
         self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
-        #self.label_progreso = QtWidgets.QLabel(self.tab_escaneo)
-        #self.label_progreso.setObjectName("label_progreso")
-        #self.horizontalLayout_7.addWidget(self.label_progreso)
-        #self.barra_progreso = QtWidgets.QProgressBar(self.tab_escaneo)
-        #self.barra_progreso.setProperty("value", 0)
-        #self.barra_progreso.setObjectName("barra_progreso")
-        #self.horizontalLayout_7.addWidget(self.barra_progreso)
+        self.label_progreso = QtWidgets.QLabel(self.tab_escaneo)
+        self.label_progreso.setObjectName("label_progreso")
+        self.horizontalLayout_7.addWidget(self.label_progreso)
+        self.barra_progreso = QtWidgets.QProgressBar(self.tab_escaneo)
+        self.barra_progreso.setProperty("value", 24)
+        self.barra_progreso.setObjectName("barra_progreso")
+        self.horizontalLayout_7.addWidget(self.barra_progreso)
         self.verticalLayout_12.addLayout(self.horizontalLayout_7)
         self.verticalLayout_13.addLayout(self.verticalLayout_12)
         self.horizontalLayout_15.addLayout(self.verticalLayout_13)
@@ -239,12 +210,9 @@ class Ui_principal(object):
         self.horizontalLayout_2.addWidget(self.label_http)
         self.boton_in_http = QtWidgets.QPushButton(self.tab_servicios)
         self.boton_in_http.setObjectName("boton_in_http")
-        self.boton_in_http.clicked.connect(self.inicia_http)
         self.horizontalLayout_2.addWidget(self.boton_in_http)
         self.boton_off_http = QtWidgets.QPushButton(self.tab_servicios)
         self.boton_off_http.setObjectName("boton_off_http")
-        self.boton_off_http.clicked.connect(self.apaga_servicio_http)
-        self.boton_off_http.setVisible(False)
         self.horizontalLayout_2.addWidget(self.boton_off_http)
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
@@ -254,12 +222,9 @@ class Ui_principal(object):
         self.horizontalLayout_3.addWidget(self.label_ftp)
         self.boton_in_ftp = QtWidgets.QPushButton(self.tab_servicios)
         self.boton_in_ftp.setObjectName("boton_in_ftp")
-        self.boton_in_ftp.clicked.connect(self.inicia_ftp)
         self.horizontalLayout_3.addWidget(self.boton_in_ftp)
         self.boton_off_ftp = QtWidgets.QPushButton(self.tab_servicios)
         self.boton_off_ftp.setObjectName("boton_off_ftp")
-        self.boton_off_ftp.clicked.connect(self.apaga_servicio_ftp)
-        self.boton_off_ftp.setVisible(False)
         self.horizontalLayout_3.addWidget(self.boton_off_ftp)
         self.verticalLayout_3.addLayout(self.horizontalLayout_3)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
@@ -269,12 +234,9 @@ class Ui_principal(object):
         self.horizontalLayout_4.addWidget(self.label_telnet)
         self.boton_in_telnet = QtWidgets.QPushButton(self.tab_servicios)
         self.boton_in_telnet.setObjectName("boton_in_telnet")
-        self.boton_in_telnet.clicked.connect(self.inicia_telnet)
         self.horizontalLayout_4.addWidget(self.boton_in_telnet)
         self.boton_off_telnet = QtWidgets.QPushButton(self.tab_servicios)
         self.boton_off_telnet.setObjectName("boton_off_telnet")
-        self.boton_off_telnet.clicked.connect(self.apaga_servicio_telnet)
-        self.boton_off_telnet.setVisible(False)
         self.horizontalLayout_4.addWidget(self.boton_off_telnet)
         self.verticalLayout_3.addLayout(self.horizontalLayout_4)
         self.horizontalLayout.addLayout(self.verticalLayout_3)
@@ -355,18 +317,9 @@ class Ui_principal(object):
         self.menuArchivo.addAction(self.actionSalir_2)
         self.menubar.addAction(self.menuArchivo.menuAction())
         self.menubar.addAction(self.menuAcerca_de.menuAction())
+
         self.retranslateUi(principal)
         self.tabs.setCurrentIndex(0)
-        self.lista_ips.setColumnCount(3)
-        menu = ["IP","MAC","Nombre"]
-        self.lista_ips.setHorizontalHeaderLabels(menu)
-        self.lista_ips.setColumnWidth(0,80)
-        self.lista_ips.setColumnWidth(1,130)
-        self.lista_ips.setColumnWidth(2,100)
-        self.boton_cambiar.setEnabled(False)
-        self.boton_seleccionar.setEnabled(False)
-        self.boton_puertos.setEnabled(False)
-        self.panel_puertos.setReadOnly(True)
         QtCore.QMetaObject.connectSlotsByName(principal)
 
     def retranslateUi(self, principal):
@@ -387,7 +340,7 @@ class Ui_principal(object):
         self.label_puertos.setText(_translate("principal", "Escaneo de puertos"))
         self.boton_puertos.setText(_translate("principal", "Iniciar escaneo"))
         self.label_puertos_abiertos.setText(_translate("principal", "Puertos abiertos"))
-        #self.label_progreso.setText(_translate("principal", "Progreso del análisis"))
+        self.label_progreso.setText(_translate("principal", "Progreso del análisis"))
         self.tabs.setTabText(self.tabs.indexOf(self.tab_escaneo), _translate("principal", "Escaneo de red"))
         self.titulo_servicios.setText(_translate("principal", "Servicios y Servidores"))
         self.desc_servicios.setText(_translate("principal", "Los servidores de los que disponemos "))
@@ -413,245 +366,6 @@ class Ui_principal(object):
         self.actionSalir.setText(_translate("principal", "Salir"))
         self.actionSalir_2.setText(_translate("principal", "Salir"))
 
-    def getMyIpAddress(self):
-        return socket.gethostbyname(socket.gethostname())
-
-    def getNetIpAddress(self,ip):
-        split_ip = ip.split('.', 3)
-        net_address = ""
-        for e in range(len(split_ip) - 1):
-            net_address += split_ip[e]
-            net_address += '.'
-        net_address += '0'
-        net_address += '/'
-        net_address += '24'
-        return net_address
-
-    def get_ip_net(self):
-        return ipaddress.ip_network(self.getNetIpAddress(self.getMyIpAddress()))
-
-    def get_all_hosts(self,hosts):
-        return list(hosts)
-
-
-
-    def get_active_hosts(self,z, t):
-        ip_net = self.get_ip_net()
-        all_hosts = list(ip_net.hosts())
-        actives = []
-        n = 1
-        QtGui.QGuiApplication.processEvents()
-        for i in range(len(all_hosts)):
-            output = subprocess.Popen(['ping', '-n', z, '-w', t, str(all_hosts[i])], stdout=subprocess.PIPE,startupinfo=info, ).communicate()[0]
-            IP = str(all_hosts[i])
-            print("Escaneando actualmente a: ", IP)
-            self.statusbar.showMessage("Escaneando actualmente a: "+str(IP))
-            if "Respuesta desde " in output.decode('ISO-8859-1') and "TTL=" in output.decode('ISO-8859-1'):
-                from subprocess import Popen, PIPE
-                pid = Popen(["arp", "-n", IP], stdout=PIPE)
-                s = pid.communicate()[0]
-                comando = "arp -a " + IP
-                resultado = subprocess.check_output(comando, shell=True)
-                MAC_addr = str(resultado).replace('-', ':')
-                p = re.compile(r'([0-9a-f]{2}(?::[0-9a-f]{2}){5})', re.IGNORECASE)
-                mac = re.findall(p, MAC_addr)
-                nombre = socket.getfqdn(IP)
-                n += 1
-                if nombre.startswith("192.") and not nombre.endswith(".1") and not nombre.endswith(".254"):
-                    clasificaciones = "[Dispositivo móvil]"
-                elif nombre.endswith(".254") or nombre.endswith(".1"):
-                    clasificaciones = "[Módem raiz]"
-                else:
-                    clasificaciones = "[Laptop/Desktop]"
-                if len(mac) <= 0:
-                    mac = MACScanner.get_MAC_addr()
-                current = Net(IP, mac, clasificaciones, nombre)
-                actives.append(current)
-        return actives
-
-    def get_ip(self,activos):
-        while True:
-            numIp = int(input("Ingrese número de la IP a la cual realizar escaneo ")) - 1
-            if numIp >= 0 and numIp < len(activos):
-                return activos[numIp]
-            else:
-                print("Opción de IP no válida")
-
-    def begin(self):
-        print("Tu estás conectado a una red\nRed detectada ubicada en: ", self.get_ip_net())
-        print("1. Escaneo rápido")
-        print("2. Escaneo normal")
-        print("3. Escaneo profundo")
-        print("4. Cancelar")
-        rigth = True
-        while (rigth):
-            rigth = False
-            opc = int(input("Selecciona tipo de escaneo: "))
-            if opc == 1:
-                z = '1'
-                t = '50'
-            elif opc == 2:
-                z = '2'
-                t = '50'
-            elif opc == 3:
-                z = '3'
-                t = '200'
-            elif opc == 4:
-                raise KeyboardInterrupt
-            else:
-                rigth = True
-        return z, t
-
-    def print_actives(self,actives):
-        print("Conexiones activas en esta red:")
-        for i in range(len(actives)):
-            rowPosition = self.lista_ips.rowCount()
-            self.lista_ips.insertRow(rowPosition)
-            self.lista_ips.setItem(rowPosition, 0, QtWidgets.QTableWidgetItem(str(actives[i].ip)))
-            self.lista_ips.setItem(rowPosition, 1, QtWidgets.QTableWidgetItem(str(actives[i].mac)))
-            self.lista_ips.setItem(rowPosition, 2, QtWidgets.QTableWidgetItem(str(actives[i].name)))
-            print(i + 1, end=") ")
-            print(actives[i].ip, end=" | ")
-            print(actives[i].mac, end=" | ")
-            print(actives[i].classification, end=" | ")
-            print(actives[i].name)
-
-    def __initial__(self,actives):
-        self.desbloquea_botones_else()
-        self.statusbar.showMessage("Se ha completado el escaneo de la red")
-        self.habilita_red()
-        self.print_actives(actives)
-        active_net = self.get_ip(actives)
-        print("IP de trabajo: ", active_net.ip)
-        return active_net
-
-    def inicia_escaneo_rapido(self):
-        hilo_escaneo_rapido = threading.Thread(target=self.escaneo_rapido)
-        hilo_escaneo_rapido.start()
-
-    def inicia_escaneo_normal(self):
-        hilo_escaneo_normal = threading.Thread(target=self.escaneo_normal)
-        hilo_escaneo_normal.start()
-
-    def inicia_escaneo_profundo(self):
-        hilo_escaneo_profundo = threading.Thread(target=self.escaneo_profundo)
-        hilo_escaneo_profundo.start()
-
-    def habilita_red(self):
-        self.boton_an_normal.setEnabled(True)
-        self.boton_an_rapido.setEnabled(True)
-        self.boton_an_profundo.setEnabled(True)
-
-    def bloquea_botones_an(self):
-        self.statusbar.showMessage("Se ha iniciado el escaneo")
-        self.boton_an_normal.setEnabled(False)
-        self.boton_an_rapido.setEnabled(False)
-        self.boton_an_profundo.setEnabled(False)
-
-    def bloquea_botones_else(self):
-        self.boton_cambiar.setEnabled(False)
-        self.boton_seleccionar.setEnabled(False)
-        self.boton_puertos.setEnabled(False)
-
-    def desbloquea_botones_else(self):
-        self.boton_cambiar.setEnabled(True)
-        self.boton_seleccionar.setEnabled(True)
-        self.boton_puertos.setEnabled(True)
-
-    def escaneo_rapido(self):
-        self.bloquea_botones_an()
-        self.bloquea_botones_else()
-        actives = self.get_active_hosts('1', '50')
-        active_net = self.__initial__(actives)
-        print("IP a trabajar: ", active_net.ip)
-        self.escaneo(active_net,actives)
-
-    def escaneo_normal(self):
-        self.bloquea_botones_an()
-        self.bloquea_botones_else()
-        actives = self.get_active_hosts('2', '50')
-        active_net = self.__initial__(actives)
-        self.escaneo(active_net,actives)
-
-    def escaneo_profundo(self):
-        self.bloquea_botones_an()
-        self.bloquea_botones_else()
-        actives = self.get_active_hosts('3', '200')
-        active_net = self.__initial__(actives)
-        self.escaneo(active_net,actives)
-
-    def escaneo(self,current,list):
-        ip = current.ip
-        print("Actual: ", ip)
-        print("IP:  ", current.ip)
-        print("MAC: ", current.mac)
-        print("NOM: ", current.name)
-        print("CLS: ", current.classification)
-        #PortScanner.scan_ports(ip, 0, 150)
-        self.print_actives(list)
-
-    def inicia_http(self):
-        self.panel_servicios.append("Servidor HTTP iniciado en "+IPScanner.getMyIpAddress()+" en el puerto "+str(HTTP_PORT))
-        server_thread_http = threading.Thread(target=self.inicia_servicio_http)
-        server_thread_http.start()
-
-    def inicia_ftp(self):
-        self.panel_servicios.append("Servidor FTP iniciado en "+IPScanner.getMyIpAddress()+" en el puerto "+str(FTP_PORT))
-        server_thread_ftp = threading.Thread(target=self.inicia_servicio_ftp)
-        server_thread_ftp.start()
-
-    def inicia_telnet(self):
-        self.panel_servicios.append("Servidor Telnet en "+IPScanner.getMyIpAddress()+" iniciado en el puerto "+str(TELNET_PORT))
-        server_thread_tel = threading.Thread(target=self.inicia_servicio_telnet)
-        server_thread_tel.start()
-
-    def inicia_servicio_http(self):
-        self.boton_in_http.setVisible(False)
-        self.boton_off_http.setVisible(True)
-        HTTPServer.start_http_server(IPScanner.getMyIpAddress(), HTTP_PORT, False)
-
-    def apaga_servicio_http(self):
-        self.panel_servicios.append("Servidor HTTP apagado")
-        self.boton_in_http.setVisible(True)
-        self.boton_off_http.setVisible(False)
-        print("Server turned off")
-        try:
-            HTTPServer.apaga_servidor()
-        except:
-            pass
-
-    def inicia_servicio_ftp(self):
-        self.boton_in_ftp.setVisible(False)
-        self.boton_off_ftp.setVisible(True)
-        FTPServer.start_ftp_server(IPScanner.getMyIpAddress(), FTP_PORT)
-
-    def apaga_servicio_ftp(self):
-        self.panel_servicios.append("Servidor FTP apagado")
-        self.boton_in_ftp.setVisible(True)
-        self.boton_off_ftp.setVisible(False)
-        print("Server turned off")
-        try:
-            FTPServer.apaga_servidor()
-        except:
-            pass
-
-    def inicia_servicio_telnet(self):
-        self.boton_in_telnet.setVisible(False)
-        self.boton_off_telnet.setVisible(True)
-        TelnetServer.start_telnet_server(IPScanner.getMyIpAddress(), TELNET_PORT)
-
-    def apaga_servicio_telnet(self):
-        self.panel_servicios.append("Servidor Telnet apagado")
-        self.boton_in_telnet.setVisible(True)
-        self.boton_off_telnet.setVisible(False)
-        print("Server turned off")
-        try:
-            TelnetServer.apaga_servidor()
-        except:
-            pass
-
-
-
 
 if __name__ == "__main__":
     import sys
@@ -660,6 +374,5 @@ if __name__ == "__main__":
     ui = Ui_principal()
     ui.setupUi(principal)
     principal.show()
-    app.aboutToQuit.connect(principal.closeEvent)
     sys.exit(app.exec_())
 

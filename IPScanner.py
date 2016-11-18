@@ -119,3 +119,9 @@ def __initial__():
     active_net = get_ip(actives)
     print("IP de trabajo: ",active_net.ip)
     return active_net,actives
+
+def __initial__q(actives):
+    print_actives(actives)
+    active_net = get_ip(actives)
+    print("IP de trabajo: ",active_net.ip)
+    return active_net,actives

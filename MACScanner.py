@@ -11,4 +11,4 @@ def get_MAC_addr():
             if command.find('Ether') > -1:
                 MAC_addr = command.split()[4]
                 break
-    return MAC_addr
+    return "['"+MAC_addr.lower()+"']"
