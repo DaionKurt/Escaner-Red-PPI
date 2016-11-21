@@ -2,6 +2,8 @@ import socket,sys
 
 BUFFER_SIZE = 10
 
+s = None
+
 def start_telnet_server(host,port):
     global s
     try:
@@ -38,4 +40,5 @@ def start_telnet_server(host,port):
         print("DA")
 
 def apaga_servidor():
+    global s
     s.close()
