@@ -5,6 +5,6 @@
 	<title>Document</title>
 </head>
 <body>
-	JEJEJEJE
+	Prueba
 </body>
 </html>

@@ -7,10 +7,9 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5 import Qt
 from IPScanner import Net
 import FTPServer,HTTPServer,IPScanner,PortScanner,TelnetServer,MACScanner
-import threading,subprocess,ipaddress,re,socket
+import threading,subprocess,ipaddress,re,socket,os
 
 ip_actual = None
 actives = None
@@ -442,6 +441,12 @@ class Ui_principal(object):
         self.menuArchivo.setObjectName("menuArchivo")
         self.menuAcerca_de = QtWidgets.QMenu(self.menubar)
         self.menuAcerca_de.setObjectName("menuAcerca_de")
+
+        self.actionAcerca_de = QtWidgets.QAction(principal)
+        self.actionAcerca_de.setObjectName("actionAcerca_de")
+        self.menuAcerca_de.addAction(self.actionAcerca_de)
+
+
         principal.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(principal)
         self.statusbar.setObjectName("statusbar")
@@ -495,9 +500,12 @@ class Ui_principal(object):
         self.estado_telnet.setMinimumWidth(6)
         self.estado_telnet.setMinimumHeight(6)
         self.estado_telnet.setMaximumWidth(40)
-
+        self.actionEncender_todos_los_servidores.triggered.connect(self.on_actionEncender_todos_los_servidores)
+        self.actionApagar_todos_los_servidores.triggered.connect(self.on_actionApagar_todos_los_servidores)
+        self.actionSalir_2.triggered.connect(self.on_actionSalir)
+        self.actionSalir.triggered.connect(self.on_actionSalir)
+        self.actionAcerca_de.triggered.connect(self.on_actionAcerca_de)
         QtCore.QMetaObject.connectSlotsByName(principal)
-
     def retranslateUi(self, principal):
         _translate = QtCore.QCoreApplication.translate
         principal.setWindowTitle(_translate("principal", "Herramienta de análisis y servicios en red"))
@@ -547,10 +555,10 @@ class Ui_principal(object):
         self.menuAcerca_de.setTitle(_translate("principal", "Acerca de"))
         self.actionEncender_todos_los_servidores.setText(_translate("principal", "Encender todos los servidores"))
         self.actionApagar_todos_los_servidores.setText(_translate("principal", "Apagar todos los servidores"))
+        self.actionAcerca_de.setText(_translate("principal","Acerca de"))
         self.actionSalir.setText(_translate("principal", "Salir"))
         self.actionSalir_2.setText(_translate("principal", "Salir"))
         self.tabs.setTabText(self.tabs.indexOf(self.tab_config),_translate("principal","Configuraciones"))
-
     @QtCore.pyqtSlot(int)
     def on_spinner_inferior_valueChanged(self, i):
         self.spinner_inferior.setMaximum(self.spinner_min_puerto.value())
@@ -559,6 +567,9 @@ class Ui_principal(object):
     def on_spinner_superior_valueChanged(self, i):
         self.spinner_superior.setMaximum(self.spinner_max_puerto.value())
 
+    '''
+    Obtención de IP de red de conexión y de la IP de la máquina
+    '''
     def getMyIpAddress(self):
         return socket.gethostbyname(socket.gethostname())
 
@@ -579,6 +590,45 @@ class Ui_principal(object):
     def get_all_hosts(self,hosts):
         return list(hosts)
 
+    '''
+        Inicio de los hilos de escaneos rapido/normal/profundo
+    '''
+    def inicia_escaneo_rapido(self):
+        self.inicia_animacion(300)
+        hilo_escaneo_rapido = threading.Thread(target=self.escaneo_rapido)
+        hilo_escaneo_rapido.start()
+
+    def inicia_escaneo_normal(self):
+        self.inicia_animacion(150)
+        hilo_escaneo_normal = threading.Thread(target=self.escaneo_normal)
+        hilo_escaneo_normal.start()
+
+    def inicia_escaneo_profundo(self):
+        self.inicia_animacion(50)
+        hilo_escaneo_profundo = threading.Thread(target=self.escaneo_profundo)
+        hilo_escaneo_profundo.start()
+
+    '''
+    Estructura de los escaneos
+    '''
+    def escaneo_rapido(self):
+        self.bloquea_botones_an()
+        self.get_active_hosts('1', '50')
+        self.__initial__()
+
+    def escaneo_normal(self):
+        self.bloquea_botones_an()
+        self.get_active_hosts('2', '50')
+        self.__initial__()
+
+    def escaneo_profundo(self):
+        self.bloquea_botones_an()
+        self.get_active_hosts('3', '200')
+        self.__initial__()
+
+    '''
+    Funciones del programa en RED
+    '''
     def selecciona_red(self):
         try:
             global ip_actual
@@ -594,7 +644,7 @@ class Ui_principal(object):
             print(e)
 
     def escanea_puertos(self):
-        self.inicia_animacion()
+        self.inicia_animacion(200)
         self.panel_puertos.clear()
         server_thread_http = threading.Thread(target=self.muestra_puertos)
         server_thread_http.start()
@@ -660,32 +710,121 @@ class Ui_principal(object):
         self.habilita_red()
         self.print_actives()
 
-    def inicia_animacion(self):
-        movie = QtGui.QMovie("loadin.gif", QtCore.QByteArray())
-        movie.scaledSize()
-        movie.setCacheMode(QtGui.QMovie.CacheAll)
-        movie.setSpeed(100)
-        self.label_tipo_an2.setMovie(movie)
-        movie.start()
+    '''
+    Inicio de los hilos de servidores y servicios
+    '''
+    def inicia_http(self):
+        self.statusbar.showMessage("Servidor HTTP iniciado")
+        self.panel_servicios.append("Servidor HTTP iniciado en http://"+IPScanner.getMyIpAddress()+":"+str(self.spinner_default_http.value()))
+        server_thread_http = threading.Thread(target=self.inicia_servicio_http)
+        server_thread_http.start()
 
-    def detener_animacion(self):
-        self.label_tipo_an2.setMovie(QtGui.QMovie("blank.gif"))
+    def inicia_ftp(self):
+        self.statusbar.showMessage("Servidor FTP iniciado")
+        self.panel_servicios.append("Servidor FTP iniciado en ftp://"+IPScanner.getMyIpAddress()+":"+str(self.spinner_default_ftp.value()))
+        server_thread_ftp = threading.Thread(target=self.inicia_servicio_ftp)
+        server_thread_ftp.start()
 
-    def inicia_escaneo_rapido(self):
-        self.inicia_animacion()
-        hilo_escaneo_rapido = threading.Thread(target=self.escaneo_rapido)
-        hilo_escaneo_rapido.start()
+    def inicia_telnet(self):
+        self.statusbar.showMessage("Servidor Telnet iniciado")
+        self.panel_servicios.append("Servidor Telnet en "+IPScanner.getMyIpAddress()+" iniciado en el puerto "+str(self.spinner_default_telnet.value()))
+        server_thread_tel = threading.Thread(target=self.inicia_servicio_telnet)
+        server_thread_tel.start()
 
-    def inicia_escaneo_normal(self):
-        self.inicia_animacion()
-        hilo_escaneo_normal = threading.Thread(target=self.escaneo_normal)
-        hilo_escaneo_normal.start()
+    '''
+    Iniciar los servidores
+    '''
+    def inicia_servicio_http(self):
+        self.boton_in_http.setVisible(False)
+        self.boton_off_http.setVisible(True)
+        pixmap = QtGui.QPixmap('on.png')
+        self.estado_http.setPixmap(pixmap)
+        HTTPServer.start_http_server(IPScanner.getMyIpAddress(), self.spinner_default_http.value(), False)
 
-    def inicia_escaneo_profundo(self):
-        self.inicia_animacion()
-        hilo_escaneo_profundo = threading.Thread(target=self.escaneo_profundo)
-        hilo_escaneo_profundo.start()
+    def inicia_servicio_ftp(self):
+        self.boton_in_ftp.setVisible(False)
+        self.boton_off_ftp.setVisible(True)
+        pixmap = QtGui.QPixmap('on.png')
+        self.estado_ftp.setPixmap(pixmap)
+        FTPServer.start_ftp_server(IPScanner.getMyIpAddress(), self.spinner_default_ftp.value())
 
+    def inicia_servicio_telnet(self):
+        self.boton_in_telnet.setVisible(False)
+        self.boton_off_telnet.setVisible(True)
+        pixmap = QtGui.QPixmap('on.png')
+        self.estado_telnet.setPixmap(pixmap)
+        TelnetServer.start_telnet_server(IPScanner.getMyIpAddress(), self.spinner_default_telnet.value())
+
+    '''
+    Apagar los servidores
+    '''
+    def apaga_servicio_http(self):
+        self.panel_servicios.append("Servidor HTTP apagado")
+        self.statusbar.showMessage("Servidor HTTP apagado")
+        self.boton_in_http.setVisible(True)
+        self.boton_off_http.setVisible(False)
+        pixmap = QtGui.QPixmap('off.png')
+        self.estado_http.setPixmap(pixmap)
+        try:
+            HTTPServer.apaga_servidor()
+        except:
+            pass
+
+    def apaga_servicio_ftp(self):
+        self.panel_servicios.append("Servidor FTP apagado")
+        self.statusbar.showMessage("Servidor FTP apagado")
+        self.boton_in_ftp.setVisible(True)
+        self.boton_off_ftp.setVisible(False)
+        pixmap = QtGui.QPixmap('off.png')
+        self.estado_ftp.setPixmap(pixmap)
+        try:
+            FTPServer.apaga_servidor()
+        except:
+            pass
+
+    def apaga_servicio_telnet(self):
+        self.statusbar.showMessage("Servidor Telnet apagado")
+        self.panel_servicios.append("Servidor Telnet apagado")
+        self.boton_in_telnet.setVisible(True)
+        self.boton_off_telnet.setVisible(False)
+        pixmap = QtGui.QPixmap('off.png')
+        self.estado_telnet.setPixmap(pixmap)
+        try:
+            TelnetServer.apaga_servidor()
+        except:
+            pass
+
+    '''
+    Acciones de la barra de menú
+    '''
+    def on_actionEncender_todos_los_servidores(self):
+        self.inicia_http()
+        self.inicia_ftp()
+        self.inicia_telnet()
+
+    def on_actionApagar_todos_los_servidores(self):
+        self.apaga_servicio_http()
+        self.apaga_servicio_ftp()
+        self.apaga_servicio_telnet()
+
+    def on_actionSalir(self):
+        sys.exit(0)
+
+    def on_actionAcerca_de(self):
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Information)
+        msg.setText("Herramienta de Análisis en Red")
+        msg.setInformativeText("Esta aplicación fue creada con fines académicos\n"
+                               " y fue desarrollada por Carlos A. Fernández\n\n"
+                               "Se considera de libre uso y de código abierto\n"
+                               "Se podrá encontrar en GitHub.\n\n"
+                               "Otros proyectos en: github.com/DaionKurt\n");
+        msg.setWindowTitle("Acerca de")
+        msg.exec()
+
+    '''
+    Funciones extras de habilitaciones de botones
+    '''
     def habilita_red(self):
         self.boton_an_normal.setEnabled(True)
         self.boton_an_rapido.setEnabled(True)
@@ -706,96 +845,19 @@ class Ui_principal(object):
         self.boton_seleccionar.setEnabled(False)
         self.boton_puertos.setEnabled(False)
 
-    def escaneo_rapido(self):
-        self.bloquea_botones_an()
-        self.get_active_hosts('1', '50')
-        self.__initial__()
+    '''
+    Extras de la animación de progreso
+    '''
+    def inicia_animacion(self,i):
+        movie = QtGui.QMovie("loadin.gif", QtCore.QByteArray())
+        movie.scaledSize()
+        movie.setCacheMode(QtGui.QMovie.CacheAll)
+        movie.setSpeed(i)
+        self.label_tipo_an2.setMovie(movie)
+        movie.start()
 
-    def escaneo_normal(self):
-        self.bloquea_botones_an()
-        self.get_active_hosts('2', '50')
-        self.__initial__()
-
-    def escaneo_profundo(self):
-        self.bloquea_botones_an()
-        self.get_active_hosts('3', '200')
-        self.__initial__()
-
-    def inicia_http(self):
-        self.statusbar.showMessage("Servidor HTTP iniciado")
-        self.panel_servicios.append("Servidor HTTP iniciado en http://"+IPScanner.getMyIpAddress()+":"+str(self.spinner_default_http.value()))
-        server_thread_http = threading.Thread(target=self.inicia_servicio_http)
-        server_thread_http.start()
-
-    def inicia_ftp(self):
-        self.statusbar.showMessage("Servidor FTP iniciado")
-        self.panel_servicios.append("Servidor FTP iniciado en ftp://"+IPScanner.getMyIpAddress()+":"+str(self.spinner_default_ftp.value()))
-        server_thread_ftp = threading.Thread(target=self.inicia_servicio_ftp)
-        server_thread_ftp.start()
-
-    def inicia_telnet(self):
-        self.statusbar.showMessage("Servidor Telnet iniciado")
-        self.panel_servicios.append("Servidor Telnet en "+IPScanner.getMyIpAddress()+" iniciado en el puerto "+str(self.spinner_default_telnet.value()))
-        server_thread_tel = threading.Thread(target=self.inicia_servicio_telnet)
-        server_thread_tel.start()
-
-    def inicia_servicio_http(self):
-        self.boton_in_http.setVisible(False)
-        self.boton_off_http.setVisible(True)
-        pixmap = QtGui.QPixmap('on.png')
-        self.estado_http.setPixmap(pixmap)
-        HTTPServer.start_http_server(IPScanner.getMyIpAddress(), self.spinner_default_http.value(), False)
-
-    def apaga_servicio_http(self):
-        self.panel_servicios.append("Servidor HTTP apagado")
-        self.statusbar.showMessage("Servidor HTTP apagado")
-        self.boton_in_http.setVisible(True)
-        self.boton_off_http.setVisible(False)
-        pixmap = QtGui.QPixmap('off.png')
-        self.estado_http.setPixmap(pixmap)
-        try:
-            HTTPServer.apaga_servidor()
-        except:
-            pass
-
-    def inicia_servicio_ftp(self):
-        self.boton_in_ftp.setVisible(False)
-        self.boton_off_ftp.setVisible(True)
-        pixmap = QtGui.QPixmap('on.png')
-        self.estado_ftp.setPixmap(pixmap)
-        FTPServer.start_ftp_server(IPScanner.getMyIpAddress(), self.spinner_default_ftp.value())
-
-    def apaga_servicio_ftp(self):
-        self.panel_servicios.append("Servidor FTP apagado")
-        self.statusbar.showMessage("Servidor FTP apagado")
-        self.boton_in_ftp.setVisible(True)
-        self.boton_off_ftp.setVisible(False)
-        pixmap = QtGui.QPixmap('off.png')
-        self.estado_ftp.setPixmap(pixmap)
-        try:
-            FTPServer.apaga_servidor()
-        except:
-            pass
-
-    def inicia_servicio_telnet(self):
-        self.boton_in_telnet.setVisible(False)
-        self.boton_off_telnet.setVisible(True)
-        pixmap = QtGui.QPixmap('on.png')
-        self.estado_telnet.setPixmap(pixmap)
-        TelnetServer.start_telnet_server(IPScanner.getMyIpAddress(), self.spinner_default_telnet.value())
-
-    def apaga_servicio_telnet(self):
-        self.statusbar.showMessage("Servidor Telnet apagado")
-        self.panel_servicios.append("Servidor Telnet apagado")
-        self.boton_in_telnet.setVisible(True)
-        self.boton_off_telnet.setVisible(False)
-        pixmap = QtGui.QPixmap('off.png')
-        self.estado_telnet.setPixmap(pixmap)
-        try:
-            TelnetServer.apaga_servidor()
-        except:
-            pass
-
+    def detener_animacion(self):
+        self.label_tipo_an2.setMovie(QtGui.QMovie("blank.gif"))
 
 if __name__ == "__main__":
     import sys
