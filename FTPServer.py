@@ -4,6 +4,8 @@ from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
+servidor = None
+
 def start_ftp_server(ip,port):
     authorizer = DummyAuthorizer()
     user = "master"
@@ -26,4 +28,5 @@ def start_ftp_server(ip,port):
         ins = input("Presiona <enter> para continuar")
 
 def apaga_servidor():
+    global servidor
     servidor.close_all()

@@ -7,9 +7,8 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from IPScanner import Net
-import FTPServer,HTTPServer,IPScanner,PortScanner,TelnetServer,MACScanner
-import threading,subprocess,ipaddress,re,socket,os
+import FTPServer,HTTPServer,IPScanner,PortScanner,TelnetServer
+import threading,subprocess
 
 ip_actual = None
 actives = None
@@ -22,6 +21,7 @@ class Ui_principal(object):
     def setupUi(self, principal):
         principal.setObjectName("principal")
         principal.resize(800, 416)
+        principal.setWindowIcon(QtGui.QIcon('img/loadin.gif'))
         self.centralwidget = QtWidgets.QWidget(principal)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -305,7 +305,6 @@ class Ui_principal(object):
         self.estado_http = QtWidgets.QLabel(self.tab_servicios)
         self.estado_http.setAlignment(QtCore.Qt.AlignTop|QtCore.Qt.AlignTop)
         self.estado_http.setObjectName("estado_http")
-
         self.verticalLayout.addWidget(self.estado_http)
         self.estado_ftp = QtWidgets.QLabel(self.tab_servicios)
         self.estado_ftp.setObjectName("estado_ftp")
@@ -366,9 +365,9 @@ class Ui_principal(object):
         self.label_7.setObjectName("label_7")
         self.horizontalLayout_21.addWidget(self.label_7)
         self.spinner_min_puerto = QtWidgets.QSpinBox(self.tab_config)
-        self.spinner_min_puerto.setMaximum(10000)
+        self.spinner_min_puerto.setMaximum(100000)
         self.spinner_min_puerto.setObjectName("spinner_min_puerto")
-        self.spinner_min_puerto.setValue(10)
+        self.spinner_min_puerto.setValue(500)
         self.horizontalLayout_21.addWidget(self.spinner_min_puerto)
         self.verticalLayout_18.addLayout(self.horizontalLayout_21)
         self.horizontalLayout_22 = QtWidgets.QHBoxLayout()
@@ -377,10 +376,10 @@ class Ui_principal(object):
         self.label_8.setObjectName("label_8")
         self.horizontalLayout_22.addWidget(self.label_8)
         self.spinner_max_puerto = QtWidgets.QSpinBox(self.tab_config)
-        self.spinner_max_puerto.setMaximum(10000)
+        self.spinner_max_puerto.setMaximum(100000)
         self.spinner_max_puerto.setProperty("value", 100)
         self.spinner_max_puerto.setObjectName("spinner_max_puerto")
-        self.spinner_max_puerto.setValue(99)
+        self.spinner_max_puerto.setValue(500)
         self.horizontalLayout_22.addWidget(self.spinner_max_puerto)
         self.verticalLayout_18.addLayout(self.horizontalLayout_22)
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
@@ -441,12 +440,9 @@ class Ui_principal(object):
         self.menuArchivo.setObjectName("menuArchivo")
         self.menuAcerca_de = QtWidgets.QMenu(self.menubar)
         self.menuAcerca_de.setObjectName("menuAcerca_de")
-
         self.actionAcerca_de = QtWidgets.QAction(principal)
         self.actionAcerca_de.setObjectName("actionAcerca_de")
         self.menuAcerca_de.addAction(self.actionAcerca_de)
-
-
         principal.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(principal)
         self.statusbar.setObjectName("statusbar")
@@ -481,7 +477,7 @@ class Ui_principal(object):
         self.verticalLayout_18.minimumHeightForWidth(100)
         self.spinner_inferior.setValue(1)
         self.spinner_superior.setValue(30)
-        pixmap = QtGui.QPixmap('off.png')
+        pixmap = QtGui.QPixmap('img/off.png')
         self.estado_http.setScaledContents(True);
         self.estado_http.setPixmap(pixmap)
         self.estado_http.show()
@@ -562,49 +558,33 @@ class Ui_principal(object):
     @QtCore.pyqtSlot(int)
     def on_spinner_inferior_valueChanged(self, i):
         self.spinner_inferior.setMaximum(self.spinner_min_puerto.value())
-
     @QtCore.pyqtSlot(int)
     def on_spinner_superior_valueChanged(self, i):
         self.spinner_superior.setMaximum(self.spinner_max_puerto.value())
-
     '''
-    Obtención de IP de red de conexión y de la IP de la máquina
-    '''
-    def getMyIpAddress(self):
-        return socket.gethostbyname(socket.gethostname())
-
-    def getNetIpAddress(self,ip):
-        split_ip = ip.split('.', 3)
-        net_address = ""
-        for e in range(len(split_ip) - 1):
-            net_address += split_ip[e]
-            net_address += '.'
-        net_address += '0'
-        net_address += '/'
-        net_address += '24'
-        return net_address
-
-    def get_ip_net(self):
-        return ipaddress.ip_network(self.getNetIpAddress(self.getMyIpAddress()))
-
-    def get_all_hosts(self,hosts):
-        return list(hosts)
-
-    '''
-        Inicio de los hilos de escaneos rapido/normal/profundo
+    Inicio de los hilos de escaneos rapido/normal/profundo
     '''
     def inicia_escaneo_rapido(self):
+        self.panel_info_ip.clear()
+        self.panel_puertos.clear()
         self.inicia_animacion(300)
+        self.lista_ips.setRowCount(0)
         hilo_escaneo_rapido = threading.Thread(target=self.escaneo_rapido)
         hilo_escaneo_rapido.start()
 
     def inicia_escaneo_normal(self):
+        self.panel_info_ip.clear()
+        self.panel_puertos.clear()
         self.inicia_animacion(150)
+        self.lista_ips.setRowCount(0)
         hilo_escaneo_normal = threading.Thread(target=self.escaneo_normal)
         hilo_escaneo_normal.start()
 
     def inicia_escaneo_profundo(self):
-        self.inicia_animacion(50)
+        self.panel_info_ip.clear()
+        self.panel_puertos.clear()
+        self.inicia_animacion(90)
+        self.lista_ips.setRowCount(0)
         hilo_escaneo_profundo = threading.Thread(target=self.escaneo_profundo)
         hilo_escaneo_profundo.start()
 
@@ -662,37 +642,8 @@ class Ui_principal(object):
         self.detener_animacion()
 
     def get_active_hosts(self,z, t):
-        ip_net = self.get_ip_net()
-        all_hosts = list(ip_net.hosts())
         global actives
-        actives = []
-        n = 1
-        QtGui.QGuiApplication.processEvents()
-        for i in range(len(all_hosts)):
-            output = subprocess.Popen(['ping', '-n', z, '-w', t, str(all_hosts[i])], stdout=subprocess.PIPE,startupinfo=info, ).communicate()[0]
-            IP = str(all_hosts[i])
-            print("Escaneando actualmente a: ", IP)
-            if "Respuesta desde " in output.decode('ISO-8859-1') and "TTL=" in output.decode('ISO-8859-1'):
-                from subprocess import Popen, PIPE
-                pid = Popen(["arp", "-n", IP], stdout=PIPE)
-                s = pid.communicate()[0]
-                comando = "arp -a " + IP
-                resultado = subprocess.check_output(comando, shell=True)
-                MAC_addr = str(resultado).replace('-', ':')
-                p = re.compile(r'([0-9a-f]{2}(?::[0-9a-f]{2}){5})', re.IGNORECASE)
-                mac = re.findall(p, MAC_addr)
-                nombre = socket.getfqdn(IP)
-                n += 1
-                if nombre.startswith("192.") and not nombre.endswith(".1") and not nombre.endswith(".254"):
-                    clasificaciones = "[Dispositivo móvil]"
-                elif nombre.endswith(".254") or nombre.endswith(".1"):
-                    clasificaciones = "[Módem raiz]"
-                else:
-                    clasificaciones = "[Laptop/Desktop]"
-                if len(mac) <= 0:
-                    mac = MACScanner.get_MAC_addr()
-                current = Net(IP, mac, clasificaciones, nombre)
-                actives.append(current)
+        actives = IPScanner.get_active_hosts(z,t)
 
     def print_actives(self):
         print("Conexiones activas en esta red:")
@@ -715,7 +666,8 @@ class Ui_principal(object):
     '''
     def inicia_http(self):
         self.statusbar.showMessage("Servidor HTTP iniciado")
-        self.panel_servicios.append("Servidor HTTP iniciado en http://"+IPScanner.getMyIpAddress()+":"+str(self.spinner_default_http.value()))
+        self.panel_servicios.append("Servidor HTTP iniciado en http://"+
+                                    IPScanner.getMyIpAddress()+":"+str(self.spinner_default_http.value()))
         server_thread_http = threading.Thread(target=self.inicia_servicio_http)
         server_thread_http.start()
 
@@ -737,21 +689,21 @@ class Ui_principal(object):
     def inicia_servicio_http(self):
         self.boton_in_http.setVisible(False)
         self.boton_off_http.setVisible(True)
-        pixmap = QtGui.QPixmap('on.png')
+        pixmap = QtGui.QPixmap('img/on.png')
         self.estado_http.setPixmap(pixmap)
         HTTPServer.start_http_server(IPScanner.getMyIpAddress(), self.spinner_default_http.value(), False)
 
     def inicia_servicio_ftp(self):
         self.boton_in_ftp.setVisible(False)
         self.boton_off_ftp.setVisible(True)
-        pixmap = QtGui.QPixmap('on.png')
+        pixmap = QtGui.QPixmap('img/on.png')
         self.estado_ftp.setPixmap(pixmap)
         FTPServer.start_ftp_server(IPScanner.getMyIpAddress(), self.spinner_default_ftp.value())
 
     def inicia_servicio_telnet(self):
         self.boton_in_telnet.setVisible(False)
         self.boton_off_telnet.setVisible(True)
-        pixmap = QtGui.QPixmap('on.png')
+        pixmap = QtGui.QPixmap('img/on.png')
         self.estado_telnet.setPixmap(pixmap)
         TelnetServer.start_telnet_server(IPScanner.getMyIpAddress(), self.spinner_default_telnet.value())
 
@@ -763,7 +715,7 @@ class Ui_principal(object):
         self.statusbar.showMessage("Servidor HTTP apagado")
         self.boton_in_http.setVisible(True)
         self.boton_off_http.setVisible(False)
-        pixmap = QtGui.QPixmap('off.png')
+        pixmap = QtGui.QPixmap('img/off.png')
         self.estado_http.setPixmap(pixmap)
         try:
             HTTPServer.apaga_servidor()
@@ -775,7 +727,7 @@ class Ui_principal(object):
         self.statusbar.showMessage("Servidor FTP apagado")
         self.boton_in_ftp.setVisible(True)
         self.boton_off_ftp.setVisible(False)
-        pixmap = QtGui.QPixmap('off.png')
+        pixmap = QtGui.QPixmap('img/off.png')
         self.estado_ftp.setPixmap(pixmap)
         try:
             FTPServer.apaga_servidor()
@@ -787,7 +739,7 @@ class Ui_principal(object):
         self.panel_servicios.append("Servidor Telnet apagado")
         self.boton_in_telnet.setVisible(True)
         self.boton_off_telnet.setVisible(False)
-        pixmap = QtGui.QPixmap('off.png')
+        pixmap = QtGui.QPixmap('img/off.png')
         self.estado_telnet.setPixmap(pixmap)
         try:
             TelnetServer.apaga_servidor()
@@ -849,7 +801,7 @@ class Ui_principal(object):
     Extras de la animación de progreso
     '''
     def inicia_animacion(self,i):
-        movie = QtGui.QMovie("loadin.gif", QtCore.QByteArray())
+        movie = QtGui.QMovie("img/loadin.gif", QtCore.QByteArray())
         movie.scaledSize()
         movie.setCacheMode(QtGui.QMovie.CacheAll)
         movie.setSpeed(i)
@@ -857,7 +809,7 @@ class Ui_principal(object):
         movie.start()
 
     def detener_animacion(self):
-        self.label_tipo_an2.setMovie(QtGui.QMovie("blank.gif"))
+        self.label_tipo_an2.setMovie(QtGui.QMovie("img/blank.gif"))
 
 if __name__ == "__main__":
     import sys

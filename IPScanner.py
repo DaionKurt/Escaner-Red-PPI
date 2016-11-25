@@ -43,7 +43,7 @@ def get_active_hosts(z,t):
     n = 1
     for i in range(len(all_hosts)):
         output = subprocess.Popen(['ping', '-n', z, '-w', t, str(all_hosts[i])], stdout=subprocess.PIPE,
-                                  startupinfo=info,).communicate()[0]
+                                  startupinfo=info, ).communicate()[0]
         IP = str(all_hosts[i])
         print("Escaneando actualmente a: ", IP)
         if "Respuesta desde " in output.decode('ISO-8859-1') and "TTL=" in output.decode('ISO-8859-1'):
